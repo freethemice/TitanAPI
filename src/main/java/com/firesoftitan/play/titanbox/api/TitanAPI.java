@@ -1,5 +1,6 @@
 package com.firesoftitan.play.titanbox.api;
 import com.firesoftitan.play.titanbox.api.listeners.MainListener;
+import com.firesoftitan.play.titanbox.api.managers.AutoUpdateManager;
 import com.firesoftitan.play.titanbox.libs.tools.LibsMessageTool;
 import com.firesoftitan.play.titanbox.libs.tools.Tools;
 import org.bukkit.Bukkit;
@@ -14,6 +15,7 @@ public final class TitanAPI extends JavaPlugin {
     public static MainListener mainListener;
     public static Tools tools;
     public static LibsMessageTool messageTool;
+    public static boolean update = false;
     @Override
     public void onEnable() {
         instants = this;
@@ -25,6 +27,20 @@ public final class TitanAPI extends JavaPlugin {
             messageTool.sendMessageSystem("Could not find PlaceholderAPI! This plugin is required.", Level.WARNING);
             Bukkit.getPluginManager().disablePlugin(this);
         }
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                new AutoUpdateManager(TitanAPI.this, 100296).getVersion(version -> {
+                    if (TitanAPI.this.getDescription().getVersion().equalsIgnoreCase(version)) {
+                        messageTool.sendMessageSystem("Plugin is up to date.");
+                    } else {
+                        TitanAPI.update = true;
+                        messageTool.sendMessageSystem("There is a new update available.");
+                        messageTool.sendMessageSystem( "https://www.spigotmc.org/resources/titan-teleport-pads.100296");
+                    }
+                });
+            }
+        }.runTaskLater(this,20);
     }
 
     @Override

@@ -5,15 +5,18 @@ import com.firesoftitan.play.titanbox.api.TitanAPI;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventException;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredListener;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +33,25 @@ public class MainListener implements Listener {
     public void registerEvents(){
         PluginManager pm = TitanAPI.instants.getServer().getPluginManager();
         pm.registerEvents(this, TitanAPI.instants);
+    }
+    @EventHandler
+    public static void onPlayerLoginEvent(PlayerLoginEvent event)
+    {
+        Player player = event.getPlayer();
+        if (event.getPlayer().isOp()) {
+            if (TitanAPI.update) {
+                new BukkitRunnable() {
+                    @Override
+                    public void run() {
+                        TitanAPI.messageTool.sendMessagePlayer(player,"There is a new update available.");
+                        TitanAPI.messageTool.sendMessagePlayer(player, "https://www.spigotmc.org/resources/titan-teleport-pads.100296/");
+
+                    }
+                }.runTaskLater(TitanAPI.instants, 20);
+            }
+        }
+
+
     }
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent event){
