@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredListener;
 
@@ -37,6 +38,13 @@ public class MainListener implements Listener {
             message = PlaceholderAPI.setPlaceholders(event.getPlayer(), message);
             event.setMessage(message);
         }
+    }
+    @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
+    public void onServerCommandEvent(ServerCommandEvent event)
+    {
+        String message = event.getCommand();
+        message = PlaceholderAPI.setPlaceholders(null, message);
+        event.setCommand(message);
     }
     List<RegisteredListener> commandListers = new ArrayList<RegisteredListener>();
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
