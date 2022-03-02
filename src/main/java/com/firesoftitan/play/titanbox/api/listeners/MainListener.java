@@ -6,10 +6,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventException;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
+import org.bukkit.event.*;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -34,25 +31,7 @@ public class MainListener implements Listener {
         PluginManager pm = TitanAPI.instants.getServer().getPluginManager();
         pm.registerEvents(this, TitanAPI.instants);
     }
-    @EventHandler
-    public static void onPlayerLoginEvent(PlayerLoginEvent event)
-    {
-        Player player = event.getPlayer();
-        if (event.getPlayer().isOp()) {
-            if (TitanAPI.update) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        TitanAPI.messageTool.sendMessagePlayer(player,"There is a new update available.");
-                        TitanAPI.messageTool.sendMessagePlayer(player, "https://www.spigotmc.org/resources/titan-teleport-pads.100296/");
 
-                    }
-                }.runTaskLater(TitanAPI.instants, 20);
-            }
-        }
-
-
-    }
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent event){
         if (event.getPlayer().hasPermission("titanbox.api") || event.getPlayer().isOp()) {
@@ -61,12 +40,29 @@ public class MainListener implements Listener {
             event.setMessage(message);
         }
     }
+    List<RegisteredListener> serverCommandListers = new ArrayList<RegisteredListener>();
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onServerCommandEvent(ServerCommandEvent event)
     {
+        try {
+        RegisteredListener[] allRL = event.getHandlers().getRegisteredListeners();
+        for(int i = 0; i < allRL.length; i++)
+        {
+            if (allRL[i].getPlugin() != TitanAPI.instants)
+            {
+                serverCommandListers.add(allRL[i]);
+                event.getHandlers().unregister(allRL[i]);
+            }
+        }
+        if (event.isCancelled()) return;
         String message = event.getCommand();
         message = PlaceholderAPI.setPlaceholders(null, message);
         event.setCommand(message);
+        callUnregEvetns(event, commandListers);
+        } catch (IllegalArgumentException e) {
+            event.setCancelled(true);
+            TitanAPI.messageTool.sendMessageSystem(ChatColor.YELLOW + "Server has no commands =(");
+        }
     }
     List<RegisteredListener> commandListers = new ArrayList<RegisteredListener>();
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
@@ -87,17 +83,17 @@ public class MainListener implements Listener {
                 message = PlaceholderAPI.setPlaceholders(event.getPlayer(), message);
                 event.setMessage(message);
             }
-            callUnregEvetns(event);
+            callUnregEvetns(event, commandListers);
         } catch (IllegalArgumentException e) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.YELLOW + "Server has no commands =(");
+            TitanAPI.messageTool.sendMessagePlayer(event.getPlayer(),ChatColor.YELLOW + "Server has no commands =(");
         }
     }
-    private void callUnregEvetns(PlayerCommandPreprocessEvent event) {
-        for (int i = 0; i < commandListers.size(); i++)
+    private void callUnregEvetns(Event event, List<RegisteredListener> listers) {
+        for (int i = 0; i < listers.size(); i++)
         {
             try {
-                commandListers.get(i).callEvent(event);
+                listers.get(i).callEvent(event);
             } catch (EventException e) {
                 e.printStackTrace();
             }

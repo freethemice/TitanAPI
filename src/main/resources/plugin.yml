@@ -7,3 +7,4 @@ description: ${project.description}
 website: ${project.url}
 depend:
   - PlaceholderAPI
+  - TitanBoxLibs
