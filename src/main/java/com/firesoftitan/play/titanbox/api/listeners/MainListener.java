@@ -9,11 +9,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.*;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredListener;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,13 +32,23 @@ public class MainListener implements Listener {
 
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onAsyncPlayerChatEvent(AsyncPlayerChatEvent event){
-        if (event.getPlayer().hasPermission("titanbox.api") || event.getPlayer().isOp()) {
+        Player player = event.getPlayer();
+        if (!TitanAPI.instants.isBungee())
+        {
+            if (TitanAPI.chatMessageManager.hasPlayer(player))
+            {
+                event.setCancelled(true);
+                TitanAPI.chatMessageManager.chatInput(player, event.getMessage());
+                return;
+            }
+        }
+        else if (player.hasPermission("titanbox.api") || player.isOp()) {
             String message = event.getMessage();
-            message = PlaceholderAPI.setPlaceholders(event.getPlayer(), message);
+            message = PlaceholderAPI.setPlaceholders(player, message);
             event.setMessage(message);
         }
     }
-    List<RegisteredListener> serverCommandListers = new ArrayList<RegisteredListener>();
+    List<RegisteredListener> serverCommandListener = new ArrayList<RegisteredListener>();
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onServerCommandEvent(ServerCommandEvent event)
     {
@@ -50,7 +58,7 @@ public class MainListener implements Listener {
         {
             if (allRL[i].getPlugin() != TitanAPI.instants)
             {
-                serverCommandListers.add(allRL[i]);
+                serverCommandListener.add(allRL[i]);
                 event.getHandlers().unregister(allRL[i]);
             }
         }
@@ -58,13 +66,13 @@ public class MainListener implements Listener {
         String message = event.getCommand();
         message = PlaceholderAPI.setPlaceholders(null, message);
         event.setCommand(message);
-        callUnregEvetns(event, commandListers);
+        callUnregisterEvents(event, commandListener);
         } catch (IllegalArgumentException e) {
             event.setCancelled(true);
             TitanAPI.messageTool.sendMessageSystem(ChatColor.YELLOW + "Server has no commands =(");
         }
     }
-    List<RegisteredListener> commandListers = new ArrayList<RegisteredListener>();
+    List<RegisteredListener> commandListener = new ArrayList<RegisteredListener>();
     @EventHandler(ignoreCancelled = false, priority = EventPriority.LOWEST)
     public void onPlayerCommand(PlayerCommandPreprocessEvent event){
         try {
@@ -73,7 +81,7 @@ public class MainListener implements Listener {
             {
                 if (allRL[i].getPlugin() != TitanAPI.instants)
                 {
-                    commandListers.add(allRL[i]);
+                    commandListener.add(allRL[i]);
                     event.getHandlers().unregister(allRL[i]);
                 }
             }
@@ -83,13 +91,13 @@ public class MainListener implements Listener {
                 message = PlaceholderAPI.setPlaceholders(event.getPlayer(), message);
                 event.setMessage(message);
             }
-            callUnregEvetns(event, commandListers);
+            callUnregisterEvents(event, commandListener);
         } catch (IllegalArgumentException e) {
             event.setCancelled(true);
             TitanAPI.messageTool.sendMessagePlayer(event.getPlayer(),ChatColor.YELLOW + "Server has no commands =(");
         }
     }
-    private void callUnregEvetns(Event event, List<RegisteredListener> listers) {
+    private void callUnregisterEvents(Event event, List<RegisteredListener> listers) {
         for (int i = 0; i < listers.size(); i++)
         {
             try {
